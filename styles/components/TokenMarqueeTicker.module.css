@@ -1,0 +1,23 @@
+#tokenMarquee {
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+#tokenList {
+  display: inline-block;
+  animation: marquee 20s linear infinite;
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(15%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.tokenItem {
+  display: inline-block;
+  margin-right: 20px;
+}

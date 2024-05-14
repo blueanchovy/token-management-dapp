@@ -111,6 +111,7 @@ export default function Home() {
     try {
       if (account && web3Object) {
         let balance = await web3Object.eth.getBalance(account);
+
         let formattedBalance = getFormattedBalance(balance);
         setBalances((prev) => ({
           ...prev,
@@ -215,3 +216,17 @@ export default function Home() {
     </DefaultLayout>
   );
 }
+
+Home.getLayout = function getLayout(
+  Home:
+    | string
+    | number
+    | bigint
+    | boolean
+    | React.ReactElement<any, string | React.JSXElementConstructor<any>>
+    | Iterable<React.ReactNode>
+    | React.ReactPortal
+    | Promise<React.AwaitedReactNode>
+) {
+  return <DefaultLayout>{Home}</DefaultLayout>;
+};
