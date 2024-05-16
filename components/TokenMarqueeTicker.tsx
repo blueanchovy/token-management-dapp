@@ -9,6 +9,75 @@ type Token = {
 
 const TokenMarqueeTicker: React.FC = () => {
   const [tokens, setTokens] = useState<Token[]>([]);
+  const [coinsData, setCoinsData] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetch = require("node-fetch");
+
+    const fetchAllCoins = async () => {
+      const url1 = "https://api.coingecko.com/api/v3/coins/list";
+      const options1 = {
+        method: "GET",
+        headers: {
+          accept: "application/json",
+          "x-cg-demo-api-key": process.env.NEXT_PUBLIC_COINGECKO_KEY,
+        },
+      };
+
+      try {
+        const res = await fetch(url1, options1);
+        const allCoins = await res.json();
+        return allCoins;
+      } catch (err) {
+        console.error("Error fetching all coins:", err);
+        return [];
+      }
+    };
+
+    const fetchCoinData = async (coinId: string) => {
+      const url = `https://api.coingecko.com/api/v3/coins/${coinId}`;
+      const options = {
+        method: "GET",
+        headers: {
+          accept: "application/json",
+          "x-cg-demo-api-key": process.env.NEXT_PUBLIC_COINGECKO_KEY,
+        },
+      };
+
+      try {
+        const res = await fetch(url, options);
+        const coinData = await res.json();
+        return coinData;
+      } catch (err) {
+        console.error(`Error fetching data for coin ${coinId}:`, err);
+        return null;
+      }
+    };
+
+    const fetchData = async () => {
+      const allCoins = await fetchAllCoins();
+      const matchedTokens = tokens
+        .map((token) => {
+          const matchedCoin = allCoins.find(
+            (coin: { symbol: string }) =>
+              coin.symbol.toLowerCase() === token.tokenSymbol.toLowerCase()
+          );
+          return { ...token, id: matchedCoin ? matchedCoin.id : null };
+        })
+        .filter((token) => token.id);
+
+      const coinsDataPromises = matchedTokens.map((token) =>
+        fetchCoinData(token.id)
+      );
+      const coinsDataResults = await Promise.all(coinsDataPromises);
+
+      setCoinsData(coinsDataResults.filter((data) => data !== null));
+    };
+
+    if (tokens.length > 0) {
+      fetchData();
+    }
+  }, [tokens]);
 
   useEffect(() => {
     const fetchTokens = async () => {
@@ -34,18 +103,27 @@ const TokenMarqueeTicker: React.FC = () => {
     <div className="mt-4 w-full bg-[#0e0f15] border-t-[0.5px] border-indigo-500">
       <div className="overflow-x-hidden">
         <div className="flex animate-marquee whitespace-nowrap hover:[animation-play-state:paused]">
-          {[...tokens].map((token, index) => (
+          {coinsData.map((coinData, index) => (
             <div
-              key={`${token.tokenAddress}-${index}`}
-              className="flex items-center space-x-4 px-4 py-2 mr-4 text-white rounded-lg cursor-pointer"
+              key={`${coinData.id}-${index}`}
+              className="flex items-center space-x-2 px-4 py-2 mr-4 text-white rounded-lg cursor-pointer"
             >
-              {/* <img
-                src={`https://example.com/token/${token.tokenSymbol}.png`}
-                alt={`${token.tokenSymbol} icon`}
-                className="w-6 h-6"
-              /> */}
-              <p className="text-blue-400">{token.tokenSymbol}</p>
-              <p>Max Price: $ {getFormattedBalance(token.maxPrice)}</p>
+              <img
+                src={coinData.image.thumb}
+                alt={`${coinData.name} icon`}
+                className="w-4 h-4"
+              />
+              <p className="text-blue-400">{coinData.symbol.toUpperCase()}</p>
+              <p className="text-[15px]">
+                ${" "}
+                {getFormattedBalance(
+                  tokens.find(
+                    (token) =>
+                      token.tokenSymbol.toLowerCase() ===
+                      coinData.symbol.toLowerCase()
+                  )?.maxPrice || "0"
+                )}
+              </p>
             </div>
           ))}
         </div>

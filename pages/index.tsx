@@ -1,55 +1,22 @@
 import React, { useEffect, useState } from "react";
 import DefaultLayout from "@/layouts/DefaultLayout";
 import Web3, { Numbers } from "web3";
-import { getFormattedBalance } from "@/utils/common";
+import { abi, getFormattedBalance } from "@/utils/common";
 
 export default function Home() {
   const [web3Object, setWeb3Object] = useState<Web3 | null>(null);
   const [web3ObjectInitialized, setWeb3ObjectInitialized] = useState(false);
   const [accounts, setAccounts] = useState<string[]>([]);
   const [balances, setBalances] = useState<{ [key: string]: string }>({});
+
   const [ERC20TokenDetails, setERC20TokenDetails] = useState<{
     [key: string]: string;
   } | null>(null);
 
-  console.log(balances);
-
   const provider = `https://sepolia.infura.io/v3/${process.env.NEXT_PUBLIC_INFURA_KEY}`;
   const erc20 = new Web3(provider);
   const token_contract_address = "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14";
-  const abi = [
-    {
-      constant: true,
-      inputs: [],
-      name: "name",
-      outputs: [
-        {
-          name: "",
-          type: "string",
-        },
-      ],
-      payable: false,
-      type: "function",
-    },
-    {
-      constant: true,
-      inputs: [
-        {
-          name: "_owner",
-          type: "address",
-        },
-      ],
-      name: "balanceOf",
-      outputs: [
-        {
-          name: "balance",
-          type: "uint256",
-        },
-      ],
-      payable: false,
-      type: "function",
-    },
-  ];
+
   const contract = new erc20.eth.Contract(abi, token_contract_address);
 
   useEffect(() => {
