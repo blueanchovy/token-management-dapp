@@ -37,10 +37,10 @@ body {
     transform: translateX(0%);
   }
   100% {
-    transform: translateX(-420%);
+    transform: translateX(-370%);
   }
 }
 
 .animate-marquee {
-  animation: marquee 40s linear infinite;
+  animation: marquee 30s linear infinite;
 }
