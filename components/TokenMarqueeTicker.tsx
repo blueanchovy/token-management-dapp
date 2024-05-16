@@ -7,9 +7,19 @@ type Token = {
   maxPrice: string;
 };
 
+type CoinData = {
+  id: string;
+  symbol: string;
+  name: string;
+  image: {
+    thumb: string;
+  };
+};
+
 const TokenMarqueeTicker: React.FC = () => {
   const [tokens, setTokens] = useState<Token[]>([]);
   const [coinsData, setCoinsData] = useState<any[]>([]);
+  const [logoCache, setLogoCache] = useState<{ [key: string]: string }>({}); // Cache for logos
 
   useEffect(() => {
     const fetch = require("node-fetch");
@@ -56,28 +66,44 @@ const TokenMarqueeTicker: React.FC = () => {
 
     const fetchData = async () => {
       const allCoins = await fetchAllCoins();
-      const matchedTokens = tokens
-        .map((token) => {
-          const matchedCoin = allCoins.find(
-            (coin: { symbol: string }) =>
-              coin.symbol.toLowerCase() === token.tokenSymbol.toLowerCase()
-          );
-          return { ...token, id: matchedCoin ? matchedCoin.id : null };
-        })
-        .filter((token) => token.id);
+      const matchedTokens = tokens.map((token) => {
+        const matchedCoin = allCoins.find(
+          (coin: { symbol: string }) =>
+            coin.symbol.toLowerCase() === token.tokenSymbol.toLowerCase()
+        );
+        return { ...token, id: matchedCoin ? matchedCoin.id : null };
+      });
 
-      const coinsDataPromises = matchedTokens.map((token) =>
-        fetchCoinData(token.id)
-      );
-      const coinsDataResults = await Promise.all(coinsDataPromises);
+      const newCoinsDataPromises = matchedTokens.map(async (token) => {
+        if (token.id && !logoCache[token.tokenSymbol.toLowerCase()]) {
+          const coinData = await fetchCoinData(token.id);
+          if (coinData) {
+            setLogoCache((prevCache) => ({
+              ...prevCache,
+              [token.tokenSymbol.toLowerCase()]: coinData.image.thumb,
+            }));
+            return { ...token, coinData };
+          }
+        } else {
+          return {
+            ...token,
+            coinData: {
+              image: { thumb: logoCache[token.tokenSymbol.toLowerCase()] },
+            },
+          };
+        }
+        return { ...token, coinData: null };
+      });
 
-      setCoinsData(coinsDataResults.filter((data) => data !== null));
+      const newCoinsDataResults = await Promise.all(newCoinsDataPromises);
+
+      setCoinsData(newCoinsDataResults);
     };
 
     if (tokens.length > 0) {
       fetchData();
     }
-  }, [tokens]);
+  }, [tokens, logoCache]);
 
   useEffect(() => {
     const fetchTokens = async () => {
@@ -103,27 +129,22 @@ const TokenMarqueeTicker: React.FC = () => {
     <div className="mt-4 w-full bg-[#0e0f15] border-t-[0.5px] border-indigo-500">
       <div className="overflow-x-hidden">
         <div className="flex animate-marquee whitespace-nowrap hover:[animation-play-state:paused]">
-          {coinsData.map((coinData, index) => (
+          {coinsData.map((data, index) => (
             <div
-              key={`${coinData.id}-${index}`}
-              className="flex items-center space-x-2 px-4 py-2 mr-4 text-white rounded-lg cursor-pointer"
+              key={`${data.tokenAddress}-${index}`}
+              className="flex items-center space-x-4 px-4 py-2 mr-4 text-white rounded-lg cursor-pointer"
             >
-              <img
-                src={coinData.image.thumb}
-                alt={`${coinData.name} icon`}
-                className="w-4 h-4"
-              />
-              <p className="text-blue-400">{coinData.symbol.toUpperCase()}</p>
-              <p className="text-[15px]">
-                ${" "}
-                {getFormattedBalance(
-                  tokens.find(
-                    (token) =>
-                      token.tokenSymbol.toLowerCase() ===
-                      coinData.symbol.toLowerCase()
-                  )?.maxPrice || "0"
-                )}
-              </p>
+              {data.coinData && data.coinData.image ? (
+                <img
+                  src={data.coinData.image.thumb}
+                  alt={`${data.coinData.name} icon`}
+                  className="w-6 h-6"
+                />
+              ) : (
+                <div className="w-6 h-6 bg-gray-400 rounded-full"></div>
+              )}
+              <p className="text-blue-400">{data.tokenSymbol}</p>
+              <p>$ {parseFloat(getFormattedBalance(data.maxPrice)) / 10000}</p>
             </div>
           ))}
         </div>
