@@ -129,24 +129,29 @@ const TokenMarqueeTicker: React.FC = () => {
     <div className="mt-4 w-full bg-[#0e0f15] border-t-[0.5px] border-indigo-500">
       <div className="overflow-x-hidden">
         <div className="flex animate-marquee whitespace-nowrap hover:[animation-play-state:paused]">
-          {coinsData.map((data, index) => (
-            <div
-              key={`${data.tokenAddress}-${index}`}
-              className="flex items-center space-x-4 px-4 py-2 mr-4 text-white rounded-lg cursor-pointer"
-            >
-              {data.coinData && data.coinData.image ? (
-                <img
-                  src={data.coinData.image.thumb}
-                  alt={`${data.coinData.name} icon`}
-                  className="w-6 h-6"
-                />
-              ) : (
-                <div className="w-6 h-6 bg-gray-400 rounded-full"></div>
-              )}
-              <p className="text-blue-400">{data.tokenSymbol}</p>
-              <p>$ {parseFloat(getFormattedBalance(data.maxPrice)) / 10000}</p>
-            </div>
-          ))}
+          {coinsData.map((data, index) => {
+            console.log(data);
+            return (
+              <div
+                key={`${data.tokenAddress}-${index}`}
+                className="flex items-center space-x-4 px-4 py-2 mr-4 text-white rounded-lg cursor-pointer"
+              >
+                {data.coinData && data.coinData.image ? (
+                  <img
+                    src={data.coinData.image.thumb}
+                    alt={`${data.coinData.name} icon`}
+                    className="w-6 h-6"
+                  />
+                ) : (
+                  <div className="w-6 h-6 bg-gray-400 rounded-full"></div>
+                )}
+                <p className="text-blue-400">{data.tokenSymbol}</p>
+                <p>
+                  $ {parseFloat(getFormattedBalance(data.maxPrice)) / 10000}
+                </p>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

@@ -1,22 +1,23 @@
 import React, { useEffect, useState } from "react";
 import DefaultLayout from "@/layouts/DefaultLayout";
-import Web3, { Numbers } from "web3";
+import Web3 from "web3";
 import { abi, getFormattedBalance } from "@/utils/common";
+import ProfileSection from "@/components/Home/ProfileSection";
+import { useActiveSection } from "@/contexts/ActiveSectionContext";
+import Navbar from "@/components/Navbar";
 
 export default function Home() {
   const [web3Object, setWeb3Object] = useState<Web3 | null>(null);
   const [web3ObjectInitialized, setWeb3ObjectInitialized] = useState(false);
   const [accounts, setAccounts] = useState<string[]>([]);
   const [balances, setBalances] = useState<{ [key: string]: string }>({});
-
   const [ERC20TokenDetails, setERC20TokenDetails] = useState<{
     [key: string]: string;
   } | null>(null);
-
+  const { activeSection } = useActiveSection();
   const provider = `https://sepolia.infura.io/v3/${process.env.NEXT_PUBLIC_INFURA_KEY}`;
   const erc20 = new Web3(provider);
   const token_contract_address = "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14";
-
   const contract = new erc20.eth.Contract(abi, token_contract_address);
 
   useEffect(() => {
@@ -24,12 +25,9 @@ export default function Home() {
 
     async function getTokenBalance() {
       try {
-        let result: Numbers = await contract?.methods
-          ?.balanceOf(accounts[0])
-          ?.call();
-        let name: string = await contract?.methods?.name(accounts[0])?.call();
-        let etherValue: string | null = getFormattedBalance(result);
-        console.log(name, etherValue);
+        let result = await contract.methods.balanceOf(accounts[0]).call();
+        let name = await contract.methods.name().call();
+        let etherValue = getFormattedBalance(result);
         setERC20TokenDetails({ [name]: etherValue });
       } catch (error) {
         console.error("Error fetching token balance:", error);
@@ -72,13 +70,12 @@ export default function Home() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [web3ObjectInitialized]);
 
   const getBalance = async (account: string | null) => {
     try {
       if (account && web3Object) {
         let balance = await web3Object.eth.getBalance(account);
-
         let formattedBalance = getFormattedBalance(balance);
         setBalances((prev) => ({
           ...prev,
@@ -120,21 +117,16 @@ export default function Home() {
 
     fetchAccounts();
 
-    // Function to refresh balances
     const refreshBalances = async () => {
-      // Check if web3Object and accounts are available
       if (web3Object) {
-        // Call the getBalances function to update balances
         await getBalances(accounts);
       }
     };
 
-    // Add event listener for network change
     if (window.ethereum) {
       window.ethereum.on("chainChanged", refreshBalances);
     }
 
-    // Cleanup function to remove the event listener
     return () => {
       if (window.ethereum) {
         window.ethereum.removeListener("chainChanged", refreshBalances);
@@ -144,34 +136,20 @@ export default function Home() {
 
   return (
     <DefaultLayout>
-      <div>
+      <div className="flex flex-row h-[-webkit-fill-available]">
+        {/* {web3Object && <Navbar />} */}
         {accounts && accounts[0] && (
           <>
-            {accounts.map((account) => (
-              <div key={account} className="flex space-x-2">
-                <p>
-                  Account: {account} {"   "}
-                </p>
-                <button
-                  onClick={async () => {
-                    await getBalance(account);
-                  }}
-                  className=" p-2 bg-blue-400 mb-6 rounded"
-                >
-                  Refresh Balance
-                </button>
-                <p>
-                  {balances[account] !== undefined
-                    ? balances[account] !== "0"
-                      ? "Balance: " + balances[account] + " Eth"
-                      : "Balance: 0.0"
-                    : "Balance: ...Loading"}
-                </p>
-              </div>
-            ))}
-            {ERC20TokenDetails && (
+            {activeSection === "profile" && (
+              <ProfileSection
+                accounts={accounts}
+                getBalance={getBalance}
+                balances={balances}
+              />
+            )}
+            {activeSection === "erc20" && ERC20TokenDetails && (
               <p>
-                ERC20 Token Details :{" "}
+                ERC20 Token Details:{" "}
                 {Object.values(ERC20TokenDetails) +
                   " " +
                   Object.keys(ERC20TokenDetails)}
@@ -183,17 +161,3 @@ export default function Home() {
     </DefaultLayout>
   );
 }
-
-Home.getLayout = function getLayout(
-  Home:
-    | string
-    | number
-    | bigint
-    | boolean
-    | React.ReactElement<any, string | React.JSXElementConstructor<any>>
-    | Iterable<React.ReactNode>
-    | React.ReactPortal
-    | Promise<React.AwaitedReactNode>
-) {
-  return <DefaultLayout>{Home}</DefaultLayout>;
-};

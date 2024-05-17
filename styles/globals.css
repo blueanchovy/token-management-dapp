@@ -6,6 +6,7 @@
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
   --background-end-rgb: 255, 255, 255;
+  height: 100vh;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -24,6 +25,7 @@ body {
       rgb(var(--background-end-rgb))
     )
     rgb(var(--background-start-rgb));
+  height: 100vh;
 }
 
 @layer utilities {
@@ -37,7 +39,7 @@ body {
     transform: translateX(100%);
   }
   100% {
-    transform: translateX(-300%);
+    transform: translateX(-320%);
   }
 }
 

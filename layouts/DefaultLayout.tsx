@@ -1,4 +1,6 @@
+import Footer from "@/components/Footer";
 import Header from "@/components/Header";
+import Navbar from "@/components/Navbar";
 import { Inter } from "next/font/google";
 
 interface DefaultLayoutProps {
@@ -13,11 +15,12 @@ export default function DefaultLayout({
   return (
     <>
       <Header />
-      <main
-        className={`flex min-h-screen flex-col items-center justify-between p-24 ${inter.className}`}
-      >
-        {children}
-      </main>
+      <div className="flex ">
+        <Navbar />
+        <main className={`p-24 ${inter.className}`}>{children}</main>
+      </div>
+
+      <Footer />
     </>
   );
 }
